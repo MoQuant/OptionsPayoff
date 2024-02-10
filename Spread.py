@@ -1,4 +1,5 @@
-url = "https://query2.finance.yahoo.com/v7/finance/options/{}"
+new_url = 'https://www.optionsprofitcalculator.com/ajax/getOptions?stock={}&reqId=1'
+
 
 
 import asyncio
@@ -14,9 +15,9 @@ def OpTable(x):
 
 class OptionsData:
 
-    def __init__(self, ticker='PLTR'):
+    def __init__(self, price=501.20, ticker='SPY'):
         self.ticker = ticker
-        self.stock_price = 0
+        self.stock_price = price
         self.call_strikes = []
         self.put_strikes = []
         self.call_prices = []
@@ -28,19 +29,19 @@ class OptionsData:
 
     async def fetch_data(self):
         async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False)) as session:
-            async with session.get(url.format(self.ticker)) as response:
+            async with session.get(new_url.format(self.ticker)) as response:
                 r = await response.text()
                 r = json.loads(r)
-                self.stock_price = r['optionChain']['result'][0]['quote']['regularMarketPrice']
-                options = r['optionChain']['result'][0]['options']
-                calls = options[0]['calls']
-                puts = options[0]['puts']
-                for c in calls:
-                    self.call_strikes.append(c['strike'])
-                    self.call_prices.append(c['lastPrice'])
-                for p in puts:
-                    self.put_strikes.append(p['strike'])
-                    self.put_prices.append(p['lastPrice'])
+                date = list(r['options'].keys())[0]
+                call = r['options'][date]['c']
+                put = r['options'][date]['p']
+                for K, items in call.items():
+                    self.call_strikes.append(float(K))
+                    self.call_prices.append(float(items['l']))
+                for K, items in put.items():
+                    self.put_strikes.append(float(K))
+                    self.put_prices.append(float(items['l']))
+                
 
 
 import tkinter as tk
